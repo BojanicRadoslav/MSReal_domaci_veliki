@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
+FILE* fp;
+
  
 // A structure to represent a stack
 struct StackNode {
@@ -73,17 +75,47 @@ int string_to_int(char *c){
 	return val;
 }
 
-int perform_op(int val1, int val2, char op){
-	if(op == '+') return val1+val2;
-	else if(op == '-') return val1-val2;
-	else if(op == '*') return val1*val2;
-	else if(op == '/') return val1/val2;
-	else printf("%c je nedozvoljena operacija\n", op);
-	return -1;
+int operacija_nad_registrima(char regx, char regy, char op){
+	if(op == '*') op = 'x';
+	char buff[30];
+	fp = fopen("/dev/alu", "w");
+	sprintf(buff, "reg%c %c reg%c\n", regx, op, regy);
+	fputs(buff, fp);
+	fclose(fp);
+}
+
+void set_register(char reg, int val){
+	fp = fopen("/dev/alu", "w");
+	char buff[30];
+	sprintf(buff, "reg%c=0x%x\n", reg, val);
+	//printf("%s\n", buff);
+	fputs(buff, fp);
+	fclose(fp);
+}
+
+int read_result(){
+	char buff[30];
+	fp = fopen("/dev/alu", "r");
+	int b, c;
+	fscanf(fp, "%d %d", &b, &c);
+	fclose(fp);
+	return b;
+}
+
+void perform_op(char op){
+	if(op == '*') op = 'x';
+	operacija_nad_registrima('a', 'b',op);
 }
 
 
+
 int main(){
+
+	char str[30];
+	fp = fopen("/dev/alu", "w");
+	sprintf(str, "format=dec\n");
+	fputs(str, fp);
+	fclose(fp);
 
 	char buff[BUFF_MAX];
 	char RPN[2*BUFF_MAX];
@@ -103,6 +135,8 @@ input:
 	printf("Unesi izraz: ");
 	scanf("%s", buff);
 	//printf("%d", buff[0]);
+	
+	if(!strcmp(buff, "exit")) return 0;
 
 	if(buff[0] == '\0') goto input;
 	int usao_u_zagradu = 0;
@@ -279,10 +313,15 @@ input:
 		}
 		int val1 = string_to_int(val1_str);
 		int val2 = string_to_int(val2_str);
-
+		
+		set_register('a', val1);
+		set_register('b', val2);
+		
+		perform_op(op);
+		res = read_result();
 		//printf("val1 %d\nval2 %d\n", val1, val2);
 
-		res = perform_op(val1, val2, op);
+		//res = perform_op(val1, val2, op);
 		//printf("%d %c %d = %d\n\n", val1,op,val2,res);
 		//push(&root, res);
 		//printf("res je %d\n", res);
@@ -308,8 +347,7 @@ input:
 					//printf("pooped %c\n", pop(&root));			
 				}
 
-
-		printf("Rezultat je: %d\n\n", res);
+		if(strcmp(buff, "exit")) printf("Rezultat je: %d\n\n", res);
 	}
 
 
