@@ -33,7 +33,7 @@ void push(struct StackNode** root, char data)
     struct StackNode* stackNode = newNode(data);
     stackNode->next = *root;
     *root = stackNode;
-    //printf("%c pushed to stack\n", data);
+    printf("%c pushed to stack\n", data);
 }
  
 int pop(struct StackNode** root)
@@ -99,6 +99,12 @@ int read_result(){
 	int b, c;
 	fscanf(fp, "%d %d", &b, &c);
 	fclose(fp);
+	//printf("carry je %d", c);
+	if(c == 1 && b != 0){
+		printf("Doslo je do prekoracenja opsega\nRezultat je neispravan\n");
+		//goto input;
+		return -1;
+	}
 	return b;
 }
 
@@ -110,7 +116,6 @@ void perform_op(char op){
 
 
 int main(){
-
 	char str[30];
 	fp = fopen("/dev/alu", "w");
 	sprintf(str, "format=dec\n");
@@ -127,11 +132,11 @@ int main(){
 	//push(&root, '-');
 
 	while(strcmp(buff, "exit")){
-
 	int rpn_pos = 0;
 	for(i=0;i<2*BUFF_MAX;i++) RPN[i] = ' '; //init RPN
 input:
-
+	rpn_pos = 0;
+	for(i=0;i<2*BUFF_MAX;i++) RPN[i] = ' ';
 	printf("Unesi izraz: ");
 	scanf("%s", buff);
 	//printf("%d", buff[0]);
@@ -267,8 +272,8 @@ input:
 	rpn_pos++;
 
 	//printf("%s\n", RPN);
-	//for(i=0;i<rpn_pos;i++) printf("%c", RPN[i]);
-	//printf("RPN end\n");
+	for(i=0;i<rpn_pos;i++) printf("%c", RPN[i]);
+	printf("\n");
 	i = 0;
 //-----------------------------------------------------//
 	//--------razresavanja RPN preko steka----------//
@@ -313,12 +318,17 @@ input:
 		}
 		int val1 = string_to_int(val1_str);
 		int val2 = string_to_int(val2_str);
-		
+		//printf("\nval1: %s\nval2: %s\n", val1_str, val2_str);
 		set_register('a', val1);
 		set_register('b', val2);
+		for(i=0;i<5;i++){
+			val1_str[i] = ' ';
+			val2_str[i] = ' ';
+		}
 		
 		perform_op(op);
 		res = read_result();
+		if(res == -1) goto input;
 		//printf("val1 %d\nval2 %d\n", val1, val2);
 
 		//res = perform_op(val1, val2, op);
